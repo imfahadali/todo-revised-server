@@ -1,13 +1,23 @@
 const Todo = require("../models/todo");
+const { getStartEndPeriod } = require("../utils/helperFunctions");
 
 const todoController = {};
 
 todoController.getAllTodos = async (req, res) => {
+  // console.log(timeFrame);
+  const { start, end } = getStartEndPeriod(req.query.timeframe);
+  console.log("start, end");
+  console.log(start, end);
+  if (!start || !end) {
+    return res.status(400).json({ message: "Invalid timeframe" });
+  }
+
   try {
     // Find and sort todos with creating time
-    const todos = await Todo.find({ user: req.user._id }).sort([
-      ["createdAt", -1],
-    ]);
+    const todos = await Todo.find({
+      user: req.user._id.toString(),
+      createdAt: { $gte: end, $lte: start }, 
+    }).sort([["createdAt", -1]]);
 
     res
       .status(200)
@@ -69,6 +79,7 @@ todoController.toggleTodo = async (req, res) => {
 };
 
 todoController.updateTodo = async (req, res) => {
+  console.log(req.body.name);
   try {
     const todo = await Todo.findOneAndUpdate(
       { _id: req.params.id },
